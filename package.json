@@ -1,7 +1,8 @@
 {
-  "name": "whatsapp-web-electron.js-vgo",
-  "version": "1.19.4",
-  "description": "Library for interacting with the WhatsApp Web API through electron",
+
+"name": "whatsapp-web-electron.js-vgo",
+"version": "1.19.5",
+  "description": "Library for interacting with the WhatsApp Web API ",
   "main": "./index.js",
   "typings": "./index.d.ts",
   "scripts": {
