@@ -31,6 +31,7 @@ const NoAuth = require('./authStrategies/NoAuth');
  * @param {string} options.userAgent - User agent to use in puppeteer
  * @param {string} options.ffmpegPath - Ffmpeg path to use when formating videos to webp while sending stickers 
  * @param {boolean} options.bypassCSP - Sets bypassing of page's Content-Security-Policy.
+ * @param {object} options.proxyAuthentication - Proxy Authentication object.
  * 
  * @fires Client#qr
  * @fires Client#authenticated
