@@ -1,4 +1,4 @@
-[![npm](https://img.shields.io/npm/v/whatsapp-web.js.svg)](https://www.npmjs.com/package/whatsapp-web-electron.js-vgo) [![Depfu](https://badges.depfu.com/badges/4a65a0de96ece65fdf39e294e0c8dcba/overview.svg)](https://depfu.com/github/pedroslopez/whatsapp-web.js?project_id=9765) ![WhatsApp_Web 2.2333.11](https://img.shields.io/badge/WhatsApp_Web-2.2333.11-brightgreen.svg) [![Discord Chat](https://img.shields.io/discord/698610475432411196.svg?logo=discord)](https://discord.gg/H7DqQs4)  
+[![npm](https://img.shields.io/npm/v/whatsapp-web.js.svg)](https://www.npmjs.com/package/whatsapp-web.js) [![Depfu](https://badges.depfu.com/badges/4a65a0de96ece65fdf39e294e0c8dcba/overview.svg)](https://depfu.com/github/pedroslopez/whatsapp-web.js?project_id=9765) ![WhatsApp_Web 2.2346.52](https://img.shields.io/badge/WhatsApp_Web-2.2346.52-brightgreen.svg) [![Discord Chat](https://img.shields.io/discord/698610475432411196.svg?logo=discord)](https://discord.gg/H7DqQs4)  
 
 A WhatsApp API client that connects through the WhatsApp Web browser app
 
@@ -75,8 +75,8 @@ The original [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) h
 | Receive media (images/audio/video/documents)  | ✅  |
 | Send contact cards | ✅ |
 | Send location | ✅ |
-| Send buttons | ✅ |
-| Send lists | ✅ (business accounts not supported) |
+| Send buttons | ❌ |
+| Send lists | ❌  [(DEPRECATED)](https://www.youtube.com/watch?v=hv1R1rLeVVE) |
 | Receive location | ✅ | 
 | Message replies | ✅ |
 | Join groups by invite  | ✅ |
@@ -93,6 +93,8 @@ The original [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) h
 | Get profile pictures | ✅ |
 | Set user status message | ✅ |
 | React to messages | ✅ |
+| Vote in polls | 🔜 |
+| Create polls | ✅ |
 
 Something missing? Make an issue and let us know!
 
