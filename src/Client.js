@@ -118,6 +118,8 @@ class Client extends EventEmitter {
             await page.authenticate(this.options.proxyAuthentication);
         }
 
+        await page.deleteCookie({name:'wa_build', domain:'.web.whatsapp.com', path:'/'});
+
         this.pupPage = page;
 
         await this.authStrategy.afterBrowserInitialized();
