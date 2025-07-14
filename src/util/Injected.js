@@ -30,6 +30,7 @@ exports.ExposeStore = (moduleRaidStr) => {
     window.Store.SendDelete = window.mR.findModule('sendDelete')[0];
     window.Store.SendMessage = window.mR.findModule('addAndSendMsgToChat')[0];
     window.Store.EditMessage = window.mR.findModule('addAndSendMessageEdit')[0];
+    window.Store.HistorySync = window.require('WAWebSendNonMessageDataRequest');
     window.Store.SendSeen = window.mR.findModule('sendSeen')[0];
     window.Store.User = window.mR.findModule('getMaybeMeUser')[0];
     window.Store.ContactMethods = window.mR.findModule('getUserid')[0];
@@ -374,6 +375,9 @@ exports.LoadUtils = () => {
         };
 
         await window.Store.SendMessage.addAndSendMsgToChat(chat, message);
+        await window.Store.HistorySync.sendPeerDataOperationRequest(3, {
+            chatId: chat.id
+        });    
         return window.Store.Msg.get(newMsgId._serialized);
     };
 	
