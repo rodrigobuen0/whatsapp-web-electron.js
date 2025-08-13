@@ -139,6 +139,16 @@ class Client extends EventEmitter {
         await this.authStrategy.afterBrowserInitialized();
         await this.initWebVersionCache();
 
+        // Antes de abrir a página
+        const client = await page.target().createCDPSession();
+
+        // Limpar cookies
+        await client.send('Network.clearBrowserCookies');
+
+        // Limpar cache
+        await client.send('Network.clearBrowserCache');
+
+        // Agora abrir a página
         await page.goto(WhatsWebURL, {
             waitUntil: "load",
             timeout: 0,
