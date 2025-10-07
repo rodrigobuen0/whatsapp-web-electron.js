@@ -32,7 +32,7 @@ exports.ExposeStore = (moduleRaidStr) => {
     window.Store.EditMessage = window.mR.findModule('addAndSendMessageEdit')[0];
     window.Store.HistorySync = window.require('WAWebSendNonMessageDataRequest');
     window.Store.SendSeen = window.mR.findModule('sendSeen')[0];
-    window.Store.User = window.mR.findModule('getMaybeMeUser')[0];
+    window.Store.User = window.mR.findModule('getMaybeMePnUser')[0];
     window.Store.ContactMethods = window.mR.findModule('getUserid')[0];
     window.Store.BusinessProfileCollection = window.mR.findModule('BusinessProfileCollection')[0].BusinessProfileCollection;
     window.Store.UploadUtils = (!window.mR.findModule((m) => (m && m.encryptAndUpload)).length ? window.mR.findModule((m) => (m.default && m.default.encryptAndUpload) ? m.default : null)[0].default : window.mR.findModule((m) => (m && m.encryptAndUpload))[0]);
@@ -333,7 +333,7 @@ exports.LoadUtils = () => {
             delete listOptions.list.footer;
         }
 
-        const meUser = window.Store.User.getMaybeMeUser();
+        const meUser = window.Store.User.getMaybeMePnUser();
         const isMD = window.Store.MDBackend;
         const newId = await window.Store.MsgKey.newId();
         
@@ -841,7 +841,7 @@ exports.LoadUtils = () => {
 
     window.WWebJS.rejectCall = async (peerJid, id) => {
         peerJid = peerJid.split('@')[0] + '@s.whatsapp.net';
-        let userId = window.Store.User.getMaybeMeUser().user + '@s.whatsapp.net';
+        let userId = window.Store.User.getMaybeMePnUser().user + '@s.whatsapp.net';
         const stanza = window.Store.SocketWap.wap('call', {
             id: window.Store.SocketWap.generateId(),
             from: window.Store.SocketWap.USER_JID(userId),

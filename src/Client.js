@@ -405,15 +405,12 @@ class Client extends EventEmitter {
          * Current connection information
          * @type {ClientInfo}
          */
-        this.info = new ClientInfo(
-            this,
-            await page.evaluate(() => {
-                return {
-                    ...window.Store.Conn.serialize(),
-                    wid: window.Store.User.getMeUser(),
-                };
-            })
-        );
+        this.info = new ClientInfo(this, await this.pupPage.evaluate(() => {
+            return { 
+                ...window.Store.Conn.serialize(),
+                wid: window.Store?.Conn?.wid || null
+            };
+        }));
 
         // Add InterfaceController
         this.interface = new InterfaceController(this);
