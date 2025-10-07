@@ -33,6 +33,7 @@ const {
 } = require("./structures");
 const LegacySessionAuth = require("./authStrategies/LegacySessionAuth");
 const NoAuth = require("./authStrategies/NoAuth");
+const {exposeFunctionIfAbsent} = require('./util/Puppeteer');
 
 /**
  * Starting point for interacting with the WhatsApp Web API
@@ -139,6 +140,16 @@ class Client extends EventEmitter {
         await this.authStrategy.afterBrowserInitialized();
         await this.initWebVersionCache();
 
+        // Antes de abrir a página
+        const client = await page.target().createCDPSession();
+
+        // Limpar cookies
+        await client.send('Network.clearBrowserCookies');
+
+        // Limpar cache
+        await client.send('Network.clearBrowserCache');
+
+        // Agora abrir a página
         await page.goto(WhatsWebURL, {
             waitUntil: "load",
             timeout: 0,
@@ -365,8 +376,16 @@ class Client extends EventEmitter {
                     : false;
             };
         });
-
-        await page.evaluate(ExposeStore, moduleRaid.toString());
+        const version = await this.getWWebVersion();
+        const isCometOrAbove = parseInt(version.split('.')?.[1]) >= 3000;
+        if (isCometOrAbove) {
+            await this.pupPage.evaluate(ExposeStore);
+        } else {
+            // make sure all modules are ready before injection
+            // 2 second delay after authentication makes sense and does not need to be made dyanmic or removed
+            await new Promise(r => setTimeout(r, 2000)); 
+            await this.pupPage.evaluate(ExposeLegacyStore);
+        }
         const authEventPayload = await this.authStrategy.getAuthEventPayload();
 
         /**
