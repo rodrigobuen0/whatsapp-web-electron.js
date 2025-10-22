@@ -322,69 +322,149 @@ class Client extends EventEmitter {
             }
         }
 
-        await page.evaluate(() => {
-            /**
-             * Helper function that compares between two WWeb versions. Its purpose is to help the developer to choose the correct code implementation depending on the comparison value and the WWeb version.
-             * @param {string} lOperand The left operand for the WWeb version string to compare with
-             * @param {string} operator The comparison operator
-             * @param {string} rOperand The right operand for the WWeb version string to compare with
-             * @returns {boolean} Boolean value that indicates the result of the comparison
-             */
-            window.compareWwebVersions = (lOperand, operator, rOperand) => {
-                if (![">", ">=", "<", "<=", "="].includes(operator)) {
-                    throw new (class _ extends Error {
-                        constructor(m) {
-                            super(m);
-                            this.name = "CompareWwebVersionsError";
+        // Aguardar a página estar estável antes de executar JavaScript
+        // Delay adaptativo baseado na performance do sistema
+        const stabilityDelay = process.platform === 'win32' && process.arch === 'x64' ? 1500 : 3000;
+        console.log(`Aguardando página estar estável (${stabilityDelay}ms)...`);
+        await new Promise(resolve => setTimeout(resolve, stabilityDelay));
+        
+        // Tentar executar com retry em caso de contexto destruído
+        let retryCount = 0;
+        const maxRetries = 5;
+        
+        while (retryCount < maxRetries) {
+            try {
+                console.log(`Tentativa ${retryCount + 1}/${maxRetries} - Definindo compareWwebVersions...`);
+                await page.evaluate(() => {
+                    /**
+                     * Helper function that compares between two WWeb versions. Its purpose is to help the developer to choose the correct code implementation depending on the comparison value and the WWeb version.
+                     * @param {string} lOperand The left operand for the WWeb version string to compare with
+                     * @param {string} operator The comparison operator
+                     * @param {string} rOperand The right operand for the WWeb version string to compare with
+                     * @returns {boolean} Boolean value that indicates the result of the comparison
+                     */
+                    window.compareWwebVersions = (lOperand, operator, rOperand) => {
+                        if (![">", ">=", "<", "<=", "="].includes(operator)) {
+                            throw new (class _ extends Error {
+                                constructor(m) {
+                                    super(m);
+                                    this.name = "CompareWwebVersionsError";
+                                }
+                            })("Invalid comparison operator is provided");
                         }
-                    })("Invalid comparison operator is provided");
-                }
-                if (
-                    typeof lOperand !== "string" ||
-                    typeof rOperand !== "string"
-                ) {
-                    throw new (class _ extends Error {
-                        constructor(m) {
-                            super(m);
-                            this.name = "CompareWwebVersionsError";
+                        if (
+                            typeof lOperand !== "string" ||
+                            typeof rOperand !== "string"
+                        ) {
+                            throw new (class _ extends Error {
+                                constructor(m) {
+                                    super(m);
+                                    this.name = "CompareWwebVersionsError";
+                                }
+                            })("A non-string WWeb version type is provided");
                         }
-                    })("A non-string WWeb version type is provided");
+
+                        lOperand = lOperand.replace(/-beta$/, "");
+                        rOperand = rOperand.replace(/-beta$/, "");
+
+                        while (lOperand.length !== rOperand.length) {
+                            lOperand.length > rOperand.length
+                                ? (rOperand = rOperand.concat("0"))
+                                : (lOperand = lOperand.concat("0"));
+                        }
+
+                        lOperand = Number(lOperand.replace(/\./g, ""));
+                        rOperand = Number(rOperand.replace(/\./g, ""));
+
+                        return operator === ">"
+                            ? lOperand > rOperand
+                            : operator === ">="
+                            ? lOperand >= rOperand
+                            : operator === "<"
+                            ? lOperand < rOperand
+                            : operator === "<="
+                            ? lOperand <= rOperand
+                            : operator === "="
+                            ? lOperand === rOperand
+                            : false;
+                    };
+                });
+                console.log('compareWwebVersions definida com sucesso');
+                break; // Sucesso, sair do loop
+            } catch (error) {
+                retryCount++;
+                console.warn(`Erro na tentativa ${retryCount}: ${error.message}`);
+                
+                if (error.message.includes('Execution context was destroyed')) {
+                    console.log('Contexto destruído, aguardando página recarregar...');
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                } else {
+                    throw error; // Re-throw se não for erro de contexto destruído
                 }
-
-                lOperand = lOperand.replace(/-beta$/, "");
-                rOperand = rOperand.replace(/-beta$/, "");
-
-                while (lOperand.length !== rOperand.length) {
-                    lOperand.length > rOperand.length
-                        ? (rOperand = rOperand.concat("0"))
-                        : (lOperand = lOperand.concat("0"));
+                
+                if (retryCount >= maxRetries) {
+                    throw new Error(`Falha ao definir compareWwebVersions após ${maxRetries} tentativas`);
                 }
-
-                lOperand = Number(lOperand.replace(/\./g, ""));
-                rOperand = Number(rOperand.replace(/\./g, ""));
-
-                return operator === ">"
-                    ? lOperand > rOperand
-                    : operator === ">="
-                    ? lOperand >= rOperand
-                    : operator === "<"
-                    ? lOperand < rOperand
-                    : operator === "<="
-                    ? lOperand <= rOperand
-                    : operator === "="
-                    ? lOperand === rOperand
-                    : false;
-            };
-        });
-        const version = await this.getWWebVersion();
+            }
+        }
+        
+        // Aguardar até que a versão esteja disponível
+        // Tentativas adaptativas baseadas na performance do sistema
+        let version = null;
+        let attempts = 0;
+        const maxAttempts = process.platform === 'win32' && process.arch === 'x64' ? 15 : 30; // Menos tentativas em sistemas potentes
+        
+        while (version === null && attempts < maxAttempts) {
+            version = await this.getWWebVersion();
+            if (version === null) {
+                console.log(`Tentativa ${attempts + 1}/${maxAttempts} - Aguardando window.Debug estar disponível...`);
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Aguardar 1 segundo
+                attempts++;
+            }
+        }
+        
+        if (version === null) {
+            console.warn('Não foi possível obter a versão do WhatsApp Web após 30 tentativas. Usando versão padrão.');
+            version = '2.3000.0'; // Versão padrão para Comet
+        }
+        
+        console.log('Versão do WhatsApp Web detectada:', version);
         const isCometOrAbove = parseInt(version.split('.')?.[1]) >= 3000;
-        if (isCometOrAbove) {
-            await this.pupPage.evaluate(ExposeStore);
-        } else {
-            // make sure all modules are ready before injection
-            // 2 second delay after authentication makes sense and does not need to be made dyanmic or removed
-            await new Promise(r => setTimeout(r, 2000)); 
-            await this.pupPage.evaluate(ExposeLegacyStore);
+        
+        // Executar ExposeStore com retry em caso de contexto destruído
+        let exposeRetryCount = 0;
+        const exposeMaxRetries = 5;
+        
+        while (exposeRetryCount < exposeMaxRetries) {
+            try {
+                console.log(`Tentativa ${exposeRetryCount + 1}/${exposeMaxRetries} - Executando ExposeStore...`);
+                
+                if (isCometOrAbove) {
+                    await this.pupPage.evaluate(ExposeStore);
+                } else {
+                    // make sure all modules are ready before injection
+                    // 2 second delay after authentication makes sense and does not need to be made dyanmic or removed
+                    await new Promise(r => setTimeout(r, 2000)); 
+                    await this.pupPage.evaluate(ExposeStore);
+                }
+                
+                console.log('ExposeStore executado com sucesso');
+                break; // Sucesso, sair do loop
+            } catch (error) {
+                exposeRetryCount++;
+                console.warn(`Erro na tentativa ${exposeRetryCount} do ExposeStore: ${error.message}`);
+                
+                if (error.message.includes('Execution context was destroyed')) {
+                    console.log('Contexto destruído durante ExposeStore, aguardando página recarregar...');
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                } else {
+                    throw error; // Re-throw se não for erro de contexto destruído
+                }
+                
+                if (exposeRetryCount >= exposeMaxRetries) {
+                    throw new Error(`Falha ao executar ExposeStore após ${exposeMaxRetries} tentativas`);
+                }
+            }
         }
         const authEventPayload = await this.authStrategy.getAuthEventPayload();
 
@@ -953,6 +1033,11 @@ class Client extends EventEmitter {
      */
     async getWWebVersion() {
         return await this.pupPage.evaluate(() => {
+            // Aguardar até que window.Debug esteja disponível
+            if (typeof window.Debug === 'undefined' || !window.Debug.VERSION) {
+                console.log('window.Debug não está disponível ainda, aguardando...');
+                return null;
+            }
             return window.Debug.VERSION;
         });
     }
@@ -1634,11 +1719,11 @@ class Client extends EventEmitter {
                                     createGroupResult.wid
                                 )
                             );
-                        isInviteV4Sent = window.compareWwebVersions(
+                        isInviteV4Sent = window.Debug && window.Debug.VERSION ? window.compareWwebVersions(
                             window.Debug.VERSION,
                             "<",
                             "2.2335.6"
-                        )
+                        ) : false
                             ? addParticipantResult === "OK"
                             : addParticipantResult.messageSendResult === "OK";
                     }

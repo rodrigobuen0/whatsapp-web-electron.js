@@ -71,10 +71,32 @@ exports.ExposeStore = () => {
     window.Store.ProfilePic = window.require('WAWebContactProfilePicThumbBridge');
     window.Store.PresenceUtils = window.require('WAWebPresenceChatAction');
     window.Store.ChatState = window.require('WAWebChatStateBridge');
-    window.Store.findCommonGroups = window.require('WAWebFindCommonGroupsContactAction').findCommonGroups;
+    try {
+        const findCommonGroupsModule = window.require('WAWebFindCommonGroupsContactAction');
+        if (findCommonGroupsModule && findCommonGroupsModule.findCommonGroups) {
+            window.Store.findCommonGroups = findCommonGroupsModule.findCommonGroups;
+        } else {
+            console.warn('WAWebFindCommonGroupsContactAction.findCommonGroups não está disponível');
+            window.Store.findCommonGroups = () => Promise.resolve([]);
+        }
+    } catch (error) {
+        console.warn('Erro ao carregar WAWebFindCommonGroupsContactAction:', error);
+        window.Store.findCommonGroups = () => Promise.resolve([]);
+    }
     window.Store.StatusUtils = window.require('WAWebContactStatusBridge');
     window.Store.ConversationMsgs = window.require('WAWebChatLoadMessages');
-    window.Store.sendReactionToMsg = window.require('WAWebSendReactionMsgAction').sendReactionToMsg;
+    try {
+        const sendReactionModule = window.require('WAWebSendReactionMsgAction');
+        if (sendReactionModule && sendReactionModule.sendReactionToMsg) {
+            window.Store.sendReactionToMsg = sendReactionModule.sendReactionToMsg;
+        } else {
+            console.warn('WAWebSendReactionMsgAction.sendReactionToMsg não está disponível');
+            window.Store.sendReactionToMsg = () => Promise.resolve(false);
+        }
+    } catch (error) {
+        console.warn('Erro ao carregar WAWebSendReactionMsgAction:', error);
+        window.Store.sendReactionToMsg = () => Promise.resolve(false);
+    }
     window.Store.createOrUpdateReactionsModule = window.require('WAWebDBCreateOrUpdateReactions');
     window.Store.EphemeralFields = window.require('WAWebGetEphemeralFieldsMsgActionsUtils');
     window.Store.MsgActionChecks = window.require('WAWebMsgActionCapability');
@@ -83,16 +105,60 @@ exports.ExposeStore = () => {
     window.Store.Socket = window.require('WADeprecatedSendIq');
     window.Store.SocketWap = window.require('WAWap');
     window.Store.SearchContext = window.require('WAWebChatMessageSearch');
-    window.Store.DrawerManager = window.require('WAWebDrawerManager').DrawerManager;
+    try {
+        const drawerModule = window.require('WAWebDrawerManager');
+        if (drawerModule && drawerModule.DrawerManager) {
+            window.Store.DrawerManager = drawerModule.DrawerManager;
+        } else {
+            console.warn('WAWebDrawerManager.DrawerManager não está disponível');
+            window.Store.DrawerManager = null;
+        }
+    } catch (error) {
+        console.warn('Erro ao carregar WAWebDrawerManager:', error);
+        window.Store.DrawerManager = null;
+    }
     window.Store.LidUtils = window.require('WAWebApiContact');
     window.Store.WidToJid = window.require('WAWebWidToJid');
     window.Store.JidToWid = window.require('WAWebJidToWid');
-    window.Store.getMsgInfo = window.require('WAWebApiMessageInfoStore').queryMsgInfo;
-    window.Store.QueryExist = window.require('WAWebQueryExistsJob').queryWidExists;
+    try {
+        const msgInfoModule = window.require('WAWebApiMessageInfoStore');
+        if (msgInfoModule && msgInfoModule.queryMsgInfo) {
+            window.Store.getMsgInfo = msgInfoModule.queryMsgInfo;
+        } else {
+            console.warn('WAWebApiMessageInfoStore.queryMsgInfo não está disponível');
+            window.Store.getMsgInfo = () => Promise.resolve(null);
+        }
+    } catch (error) {
+        console.warn('Erro ao carregar WAWebApiMessageInfoStore:', error);
+        window.Store.getMsgInfo = () => Promise.resolve(null);
+    }
+    try {
+        const queryExistModule = window.require('WAWebQueryExistsJob');
+        if (queryExistModule && queryExistModule.queryWidExists) {
+            window.Store.QueryExist = queryExistModule.queryWidExists;
+        } else {
+            console.warn('WAWebQueryExistsJob.queryWidExists não está disponível');
+            window.Store.QueryExist = () => Promise.resolve(false);
+        }
+    } catch (error) {
+        console.warn('Erro ao carregar WAWebQueryExistsJob:', error);
+        window.Store.QueryExist = () => Promise.resolve(false);
+    }
     window.Store.ReplyUtils = window.require('WAWebMsgReply');
     window.Store.BotSecret = window.require('WAWebBotMessageSecret');
     window.Store.BotProfiles = window.require('WAWebBotProfileCollection');
-    window.Store.ContactCollection = window.require('WAWebContactCollection').ContactCollection;
+    try {
+        const contactCollectionModule = window.require('WAWebContactCollection');
+        if (contactCollectionModule && contactCollectionModule.ContactCollection) {
+            window.Store.ContactCollection = contactCollectionModule.ContactCollection;
+        } else {
+            console.warn('WAWebContactCollection.ContactCollection não está disponível');
+            window.Store.ContactCollection = null;
+        }
+    } catch (error) {
+        console.warn('Erro ao carregar WAWebContactCollection:', error);
+        window.Store.ContactCollection = null;
+    }
     window.Store.DeviceList = window.require('WAWebApiDeviceList');
     window.Store.HistorySync = window.require('WAWebSendNonMessageDataRequest');
     window.Store.AddonReactionTable = window.require('WAWebAddonReactionTableMode').reactionTableMode;
@@ -108,9 +174,22 @@ exports.ExposeStore = () => {
     
     window.Store.Settings = {
         ...window.require('WAWebUserPrefsGeneral'),
-        ...window.require('WAWebUserPrefsNotifications'),
-        setPushname: window.require('WAWebSetPushnameConnAction').setPushname
+        ...window.require('WAWebUserPrefsNotifications')
     };
+    
+    // Proteger setPushname
+    try {
+        const setPushnameModule = window.require('WAWebSetPushnameConnAction');
+        if (setPushnameModule && setPushnameModule.setPushname) {
+            window.Store.Settings.setPushname = setPushnameModule.setPushname;
+        } else {
+            console.warn('WAWebSetPushnameConnAction.setPushname não está disponível');
+            window.Store.Settings.setPushname = () => Promise.resolve(false);
+        }
+    } catch (error) {
+        console.warn('Erro ao carregar WAWebSetPushnameConnAction:', error);
+        window.Store.Settings.setPushname = () => Promise.resolve(false);
+    }
     window.Store.NumberInfo = {
         ...window.require('WAPhoneUtils'),
         ...window.require('WAPhoneFindCC')
@@ -380,12 +459,21 @@ exports.LoadUtils = () => {
             delete options.linkPreview;
             const link = window.Store.Validators.findLink(content);
             if (link) {
-                let preview = await window.Store.LinkPreview.getLinkPreview(link);
-                if (preview && preview.data) {
-                    preview = preview.data;
-                    preview.preview = true;
-                    preview.subtype = 'url';
-                    options = {...options, ...preview};
+                try {
+                    if (window.Store.LinkPreview && window.Store.LinkPreview.getLinkPreview) {
+                        let preview = await window.Store.LinkPreview.getLinkPreview(link);
+                        if (preview && preview.data) {
+                            preview = preview.data;
+                            preview.preview = true;
+                            preview.subtype = 'url';
+                            options = {...options, ...preview};
+                        }
+                    } else {
+                        console.warn('LinkPreview.getLinkPreview não está disponível - enviando sem preview');
+                    }
+                } catch (error) {
+                    console.warn('Erro ao gerar preview do link:', error);
+                    // Continua sem preview
                 }
             }
         }
@@ -506,10 +594,21 @@ exports.LoadUtils = () => {
             delete options.linkPreview;
             const link = window.Store.Validators.findLink(content);
             if (link) {
-                const preview = await window.Store.LinkPreview.getLinkPreview(link);
-                preview.preview = true;
-                preview.subtype = 'url';
-                options = { ...options, ...preview };
+                try {
+                    if (window.Store.LinkPreview && window.Store.LinkPreview.getLinkPreview) {
+                        const preview = await window.Store.LinkPreview.getLinkPreview(link);
+                        if (preview) {
+                            preview.preview = true;
+                            preview.subtype = 'url';
+                            options = { ...options, ...preview };
+                        }
+                    } else {
+                        console.warn('LinkPreview.getLinkPreview não está disponível para editMessage - enviando sem preview');
+                    }
+                } catch (error) {
+                    console.warn('Erro ao gerar preview do link para editMessage:', error);
+                    // Continua sem preview
+                }
             }
         }
 
